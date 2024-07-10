@@ -1,22 +1,22 @@
-﻿using Microsoft.EntityFrameworkCore;
+﻿using Microsoft.EntityFrameworkCore; // Using Entity Framework Core
 
 namespace Asphalt9CarRecords.Models
 {
-    public class CarContext : DbContext
+    public class CarContext : DbContext // Defining CarContext which inherits from DbContext
     {
         public CarContext(DbContextOptions<CarContext> options)
-            : base(options)
+            : base(options) // Calling the base constructor with options
         {
         }
 
-        public DbSet<Car> Cars { get; set; } = null!;
-        public DbSet<CarClass> CarClasses { get; set; } = null!;
+        public DbSet<Car> Cars { get; set; } = null!; // Defining DbSet for Cars
+        public DbSet<CarClass> CarClasses { get; set; } = null!; // Defining DbSet for CarClasses
 
-        protected override void OnModelCreating(ModelBuilder modelBuilder)
+        protected override void OnModelCreating(ModelBuilder modelBuilder) // Configuring the model
         {
-            base.OnModelCreating(modelBuilder);
+            base.OnModelCreating(modelBuilder); // Calling base method
 
-            modelBuilder.Entity<CarClass>().HasData(
+            modelBuilder.Entity<CarClass>().HasData( // Seeding initial data for CarClass
                 new CarClass { Id = 1, Name = "D Class" },
                 new CarClass { Id = 2, Name = "C Class" },
                 new CarClass { Id = 3, Name = "B Class" },
@@ -24,7 +24,7 @@ namespace Asphalt9CarRecords.Models
                 new CarClass { Id = 5, Name = "S Class" }
             );
 
-            modelBuilder.Entity<Car>().HasData(
+            modelBuilder.Entity<Car>().HasData( // Seeding initial data for Cars
                 new Car { Id = 1, Name = "Mitsubishi Lancer Evolution", Speed = 180, Acceleration = 60, Handling = 70, Nitro = 50, CarClassId = 1 },
                 new Car { Id = 2, Name = "BMW Z4 LCI E89", Speed = 190, Acceleration = 65, Handling = 72, Nitro = 52, CarClassId = 1 },
 

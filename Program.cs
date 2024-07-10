@@ -1,41 +1,40 @@
-using Asphalt9CarRecords.Models;
-using Microsoft.EntityFrameworkCore;
+using Asphalt9CarRecords.Models; // Using the Models namespace
+using Microsoft.AspNetCore.Cors.Infrastructure;
+using Microsoft.EntityFrameworkCore; // Using Entity Framework Core for database operations
+using Microsoft.Extensions.Logging; // Using logging functionality
 
-var builder = WebApplication.CreateBuilder(args);
+var builder = WebApplication.CreateBuilder(args); // Creating a builder for the web application
 
-// Add services to the container.
-builder.Services.AddControllers();
-
-// Add support for endpoint exploration and API documentation
-builder.Services.AddEndpointsApiExplorer();
-builder.Services.AddSwaggerGen();
-
-// Configure Entity Framework Core to use an in-memory database
+builder.Services.AddControllers(); // Adding controller services to the container
+builder.Services.AddEndpointsApiExplorer(); // Adding endpoints API explorer
+builder.Services.AddSwaggerGen(); // Adding Swagger for API documentation
 builder.Services.AddDbContext<CarContext>(options =>
 {
-    options.UseInMemoryDatabase("CarDatabase");
+    options.UseInMemoryDatabase("CarDatabase"); // Configuring an in-memory database
 });
+builder.Services.AddScoped<ICarService, CarService>(); // Registering CarService as a scoped service
+builder.Services.AddAutoMapper(typeof(Program)); // Adding AutoMapper for object mapping
 
-var app = builder.Build();
+builder.Logging.ClearProviders(); // Clearing default logging providers
+builder.Logging.AddConsole(); // Adding console logging provider
 
-// Configure the HTTP request pipeline.
-if (app.Environment.IsDevelopment())
+var app = builder.Build(); // Building the web application
+
+if (app.Environment.IsDevelopment()) // If the environment is development
 {
-    app.UseSwagger();
-    app.UseSwaggerUI();
+    app.UseSwagger(); // Use Swagger for API documentation
+    app.UseSwaggerUI(); // Use Swagger UI
 }
 
-app.UseHttpsRedirection();
-app.UseAuthorization();
-app.MapControllers();
+app.UseHttpsRedirection(); // Use HTTPS redirection
+app.UseAuthorization(); // Use authorization middleware
 
-// Log seed data
-using (var scope = app.Services.CreateScope())
+app.MapControllers(); // Map controllers to endpoints
+
+using (var scope = app.Services.CreateScope()) // Creating a scope for the service provider
 {
-    var context = scope.ServiceProvider.GetRequiredService<CarContext>();
-    context.Database.EnsureDeleted();
-    context.Database.EnsureCreated();
-    Console.WriteLine("Database has been initialized and seeded.");
+    var context = scope.ServiceProvider.GetRequiredService<CarContext>(); // Getting the CarContext service
+    await DataSeeder.SeedDataAsync(context); // Seeding initial data
 }
 
-app.Run();
+app.Run(); // Running the web application

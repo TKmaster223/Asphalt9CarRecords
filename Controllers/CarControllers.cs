@@ -1,105 +1,78 @@
-﻿using Microsoft.AspNetCore.Mvc;
-using Microsoft.EntityFrameworkCore;
-using Asphalt9CarRecords.Models;
+﻿using Asphalt9CarRecords.Models.DTOs; // Using the DTOs namespace
+using Asphalt9CarRecords.Models; // Using the Services namespace
+using Microsoft.AspNetCore.Mvc; // Using ASP.NET Core MVC
 
 namespace Asphalt9CarRecords.Controllers
 {
-    [Route("api/[controller]")]
-    [ApiController]
-    public class CarsController : ControllerBase
+    [Route("api/[controller]")] // Route for the controller
+    [ApiController] // Marking the class as an API controller
+    public class CarsController : ControllerBase // Inheriting from ControllerBase
     {
-        private readonly CarContext _context;
+        private readonly ICarService _carService; // CarService for handling car operations
 
-        public CarsController(CarContext context)
+        public CarsController(ICarService carService) // Constructor to inject dependencies
         {
-            _context = context;
+            _carService = carService;
         }
 
         // GET: api/Cars
-        [HttpGet]
-        public async Task<ActionResult<IEnumerable<Car>>> GetCars()
+        [HttpGet] // HTTP GET method
+        public async Task<ActionResult<IEnumerable<CarDto>>> GetCars() // Get all cars
         {
-            var cars = await _context.Cars.Include(c => c.CarClass).ToListAsync();
-            if (!cars.Any())
-            {
-                return NotFound("No cars found in the database.");
-            }
-            return cars;
+            var cars = await _carService.GetAllCarsAsync(); // Get all cars from the service
+            return Ok(cars); // Return OK with the list of cars
         }
 
         // GET: api/Cars/5
-        [HttpGet("{id}")]
-        public async Task<ActionResult<Car>> GetCar(int id)
+        [HttpGet("{id}")] // HTTP GET method with ID
+        public async Task<ActionResult<CarDto>> GetCar(int id) // Get car by ID
         {
-            var car = await _context.Cars.Include(c => c.CarClass).FirstOrDefaultAsync(c => c.Id == id);
-
+            var car = await _carService.GetCarByIdAsync(id); // Get the car from the service
             if (car == null)
             {
-                return NotFound();
+                return NotFound(); // Return NotFound if car not found
             }
 
-            return car;
+            return Ok(car); // Return OK with the car
         }
 
         // POST: api/Cars
-        [HttpPost]
-        public async Task<ActionResult<Car>> PostCar(Car car)
+        [HttpPost] // HTTP POST method
+        public async Task<ActionResult<CarDto>> PostCar(CarDto carDto) // Add a new car
         {
-            _context.Cars.Add(car);
-            await _context.SaveChangesAsync();
-
-            return CreatedAtAction("GetCar", new { id = car.Id }, car);
+            var car = await _carService.AddCarAsync(carDto); // Add the car using the service
+            return CreatedAtAction(nameof(GetCar), new { id = car.Id }, car); // Return CreatedAtAction with the new car
         }
 
         // PUT: api/Cars/5
-        [HttpPut("{id}")]
-        public async Task<IActionResult> PutCar(int id, Car car)
+        [HttpPut("{id}")] // HTTP PUT method with ID
+        public async Task<IActionResult> PutCar(int id, CarDto carDto) // Update an existing car
         {
-            if (id != car.Id)
+            if (id != carDto.Id)
             {
-                return BadRequest();
+                return BadRequest(); // Return BadRequest if ID doesn't match
             }
 
-            _context.Entry(car).State = EntityState.Modified;
-
-            try
+            var success = await _carService.UpdateCarAsync(id, carDto); // Update the car using the service
+            if (!success)
             {
-                await _context.SaveChangesAsync();
-            }
-            catch (DbUpdateConcurrencyException)
-            {
-                if (!CarExists(id))
-                {
-                    return NotFound();
-                }
-                else
-                {
-                    throw;
-                }
+                return NotFound(); // Return NotFound if update unsuccessful
             }
 
-            return NoContent();
+            return NoContent(); // Return NoContent if update successful
         }
 
         // DELETE: api/Cars/5
-        [HttpDelete("{id}")]
-        public async Task<IActionResult> DeleteCar(int id)
+        [HttpDelete("{id}")] // HTTP DELETE method with ID
+        public async Task<IActionResult> DeleteCar(int id) // Delete a car
         {
-            var car = await _context.Cars.FindAsync(id);
-            if (car == null)
+            var success = await _carService.DeleteCarAsync(id); // Delete the car using the service
+            if (!success)
             {
-                return NotFound();
+                return NotFound(); // Return NotFound if deletion unsuccessful
             }
 
-            _context.Cars.Remove(car);
-            await _context.SaveChangesAsync();
-
-            return NoContent();
-        }
-
-        private bool CarExists(int id)
-        {
-            return _context.Cars.Any(e => e.Id == id);
+            return NoContent(); // Return NoContent if deletion successful
         }
     }
 }
